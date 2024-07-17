@@ -11,7 +11,7 @@ void setup() {
 
   display.clearDisplay();      //this line to clear previous logo
   display.setTextColor(WHITE); //without this no display
-  display.print("Bienvenidos");//your TEXT here
+  display.print("Hola");//your TEXT here
   display.display();            //to shows or update your TEXT
 }
 
