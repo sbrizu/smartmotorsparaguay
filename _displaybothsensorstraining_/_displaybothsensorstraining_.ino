@@ -1,5 +1,5 @@
 #include <Servo.h>
-#include "Ultrasonic.h"
+#include "Ultrasonic.h" // specify address 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
