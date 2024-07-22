@@ -49,7 +49,7 @@ bool useLightSensor = false;    // Declaration of useLightSensor
 void checkMemory() {
   extern int __heap_start, *__brkval;
   int v;
-  int free_memory = (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+  int free_memory = (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__heap_start);
   Serial.print(F("Free memory: "));
   Serial.println(free_memory);
 }
@@ -57,7 +57,7 @@ void checkMemory() {
 void setup() {
   Serial.begin(9600);
   Wire.begin(); // Start the I2C communication
-  
+
   myservo.attach(servoPin);
   myservo2.attach(servoPin2);
   pinMode(buttonPin, INPUT);
@@ -65,32 +65,34 @@ void setup() {
   pinMode(downbuttonPin, INPUT);
 
   // display set up
-  
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.display();
-  delay(2000);
-
-  int16_t x1, y1;
-  uint16_t w, h;
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;); // Don't proceed, loop forever
+  }
 
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
+
   display.setTextSize(1);
+  int16_t x1, y1;
+  uint16_t w, h;
   display.getTextBounds(F("Bienvenidos"), 0, 0, &x1, &y1, &w, &h);
-  display.setCursor((128 - w) / 2, 0);
+  display.setCursor((SCREEN_WIDTH - w) / 2, 0);
   display.println(F("Bienvenidos"));
 
-
   display.setTextSize(2);
-  display.getTextBounds("COMENZAR", 0, 0, &x1, &y1, &w, &h);
-  display.setCursor((128 - w) / 2, 16);
-  display.println("COMENZAR");
-  display.drawRect((128 - w) / 2 - 2, 16 + y1 - 2, w + 4, h + 4, SSD1306_WHITE);
-
+  display.getTextBounds(F("COMENZAR"), 0, 0, &x1, &y1, &w, &h);
+  int16_t box_x = (SCREEN_WIDTH - w) / 2 - 4;
+  int16_t box_y = 16 - 4;
+  uint16_t box_w = w + 8;
+  uint16_t box_h = h + 8;
+  display.drawRect(box_x, box_y, box_w, box_h, SSD1306_WHITE);
+  display.setCursor((SCREEN_WIDTH - w) / 2, 16);
+  display.println(F("COMENZAR"));
 
   display.setTextSize(1);
   display.setCursor(0, 50);
-  display.println("Smart Motors Paraguay");
+  display.println(F("Smart Motors Paraguay"));
+
   display.display();
   delay(2000);
   display.clearDisplay();
@@ -106,6 +108,24 @@ void displaySensorChoice(const __FlashStringHelper* sensor) {
   display.display();
 }
 
+void displaySensorValue(int sensorValue, const __FlashStringHelper* label) {
+  int percentage = map(sensorValue, 0, 100, 0, 100);
+  display.clearDisplay();
+  display.drawLine(0, 47, 0, 62, SSD1306_WHITE);
+  display.fillRect(1, 50, map(percentage, 0, 100, 0, SCREEN_WIDTH - 2), 10, SSD1306_WHITE);
+  display.setTextSize(1); // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(102, 50);
+  display.print(percentage);
+  display.println(F("%"));
+  display.fillRect(1, 11, 68, 33, SSD1306_BLACK); // Clear box
+  display.setCursor(5, 30);
+  display.setTextSize(1);
+  display.println(label);
+  display.setTextSize(1);
+  display.display();
+}
+
 void trainDistanceSensor() {
   val = analogRead(potPin);
   val2 = analogRead(potPin2);
@@ -114,6 +134,12 @@ void trainDistanceSensor() {
   val2 = map(val2, 0, 1023, 0, 180);
 
   RangeInCentimeters = ultrasonic.MeasureInCentimeters();
+
+  //Serial.println(RangeInCentimeters);
+
+  int distancePercentage = map(RangeInCentimeters, 0, 100, 0, 100);
+  
+  displaySensorValue(distancePercentage, F("Sensor de distancia"));
 
   if (buttonState == HIGH && lastButtonState == LOW) {
     buttonPressStartTime = millis();
@@ -149,7 +175,9 @@ void trainLightSensor() {
   val = map(val, 0, 1023, 0, 180);
   val2 = map(val2, 0, 1023, 0, 180);
 
-  lightSensorValue = analogRead(lightSensorPin);
+  lightSensorValue =  map(analogRead(lightSensorPin), 0, 1023, 0, 100);
+  //Serial.println(lightSensorValue);
+  displaySensorValue(lightSensorValue, F("Sensor de luz"));
 
   if (buttonState == HIGH && lastButtonState == LOW) {
     buttonPressStartTime = millis();
