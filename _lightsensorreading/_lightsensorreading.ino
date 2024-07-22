@@ -74,16 +74,16 @@ void progressbar() {
   display.print(perCent);
   display.println("%");
   display.fillRect(1, 11, 68, 33, SSD1306_BLACK); // Clear box
-  display.setCursor(5, 40);
+  display.setCursor(5, 30);
   display.setTextSize(1); 
-  display.println("Light sensor Value");
+  display.println("Intensidad de la luz");
   display.setTextSize(1);
   display.display();
   delay(100);
 }
 
 void loop() {
-  if (digitalRead(buttonPin) == LOW) { // Assuming button is active LOW
+  if (digitalRead(buttonPin) == HIGH) { // Assuming button is active LOW
     startProgressBar = true;
   }
 
