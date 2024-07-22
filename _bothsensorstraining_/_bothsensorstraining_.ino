@@ -37,7 +37,7 @@ int lastButtonState = LOW;
 unsigned long buttonPressStartTime;
 
 // record data
-const int maxRecords = 100;
+const int maxRecords = 20;
 int recordedPositions1 [maxRecords];
 int recordedPositions2 [maxRecords];
 long recordedDistances[maxRecords];

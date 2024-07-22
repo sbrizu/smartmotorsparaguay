@@ -4,10 +4,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+//#define SCREEN_WIDTH 128 // OLED display width, in pixels
+//#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET -1    // Reset pin # (or -1 if sharing Arduino reset pin)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_SSD1306 display(128, 64, &Wire, OLED_RESET);
 
 // Constants for pin connections
 const int servoPin = 2;
@@ -70,33 +70,29 @@ void setup() {
   display.setCursor(0, 0);
   display.println(F("Bienvenidos"));
 
-  display.setTextSize(2);
-  display.setCursor(0, 16);
+ // display.setTextSize(2);
+  //display.setCursor(0, 16);
   display.println(F("COMENZAR"));
 
-  display.setTextSize(1);
-  display.setCursor(0, 50);
-  display.println(F("Smart Motors Paraguay"));
-
-
- /* display.clearDisplay();
+ // display.setTextSize(1);
+  //display.setCursor(0, 50);
+  //display.println(F("Smart Motors Paraguay"));
+/*
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
   display.setTextColor(WHITE);
   display.setTextSize(1);
   display.setCursor(0, 0);
   display.println(F("Bienvenidos"));
+  
   int16_t x1, y1;
   uint16_t w, h;
 
-  display.getTextBounds("Bienvenidos", 0, 0, &x1, &y1, &w, &h);
-  display.setCursor((SCREEN_WIDTH - w) / 2, 0);
-  display.println("Bienvenidos");
-
-
   display.setTextSize(2);
   display.getTextBounds("COMENZAR", 0, 0, &x1, &y1, &w, &h);
-  display.setCursor((SCREEN_WIDTH - w) / 2, 16);
+  display.setCursor((128 - w) / 2, 16);
   display.println("COMENZAR");
-  display.drawRect((SCREEN_WIDTH - w) / 2 - 2, 16 + y1 - 2, w + 4, h + 4, SSD1306_WHITE);
+  display.drawRect((128 - w) / 2 - 2, 16 + y1 - 2, w + 4, h + 4, SSD1306_WHITE);
 
 
   display.setTextSize(1);
