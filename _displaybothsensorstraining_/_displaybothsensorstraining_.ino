@@ -37,7 +37,7 @@ int lastButtonState = LOW;
 unsigned long buttonPressStartTime;
 
 // record data
-const int maxRecords = 100;
+const int maxRecords = 20;
 int recordedPositions1 [maxRecords];
 int recordedPositions2 [maxRecords];
 long recordedDistances[maxRecords];
@@ -61,260 +61,57 @@ void setup() {
   pinMode(upbuttonPin, INPUT);
   pinMode(downbuttonPin, INPUT);
 
+  // display set up
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println(F("Bienvenidos"));
+
+  display.setTextSize(2);
+  display.setCursor(0, 16);
+  display.println(F("COMENZAR"));
+
+  display.setTextSize(1);
+  display.setCursor(0, 50);
+  display.println(F("Smart Motors Paraguay"));
+
+
+ /* display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  display.println(F("Bienvenidos"));
+  int16_t x1, y1;
+  uint16_t w, h;
+
+  display.getTextBounds("Bienvenidos", 0, 0, &x1, &y1, &w, &h);
+  display.setCursor((SCREEN_WIDTH - w) / 2, 0);
+  display.println("Bienvenidos");
+
+
+  display.setTextSize(2);
+  display.getTextBounds("COMENZAR", 0, 0, &x1, &y1, &w, &h);
+  display.setCursor((SCREEN_WIDTH - w) / 2, 16);
+  display.println("COMENZAR");
+  display.drawRect((SCREEN_WIDTH - w) / 2 - 2, 16 + y1 - 2, w + 4, h + 4, SSD1306_WHITE);
+
+
+  display.setTextSize(1);
+  display.setCursor(0, 50);
+  display.println("Smart Motors Paraguay");
+*/
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+
 }
 
 
-  // training with light sensor
-void trainLightSensor () {
-  val = analogRead(potPin);
-  val2 = analogRead(potPin2);
-//potentiometer and servo position
-  val = map(val, 0, 1023, 0, 180);
-  val2 = map(val2, 0, 1023, 0, 180);
+//void displayTrainLight(){
 
-  int raw_light = analogRead(light_sensor);
-  lightLevel = map(raw_light, 0, 1023, 0, 100);
-  if (buttonState == HIGH && lastButtonState == LOW) {
-    // Button was just pressed
-    buttonPressStartTime = millis();
-  } else if (buttonState == LOW && lastButtonState == HIGH) {
-    // Button was just released
-    unsigned long pressDuration = millis() - buttonPressStartTime;
-    if (pressDuration >= 2000) {
-      // Button was held for 2 seconds or more
-      if (recordCount > 0) {
-        playingBack = true;
-        Serial.println("Starting playback.");
-      }
-    } else if (pressDuration >= 1000 && pressDuration < 2000) {
-      // Button was held for 1 second or more but less than 2 seconds
-      if (!recording) {
-        actualLightLevel = lightLevel;
-        Serial.print("actual light level set to: ");
-        Serial.println(actualLightLevel);
-        recordlightData(val, val2, lightLevel); // Record the servo position and light level
-      }
-    }
-  }
-
-  // Update the last button state
-  lastButtonState = buttonState;
-
-  // If playing back, set servo based on recorded light levels
-  if (playingBack) {
-    playbacklightServoPosition(lightLevel);
-  } else {
-    // Set the servo position if not playing back
-    myservo.write(val);
-    myservo2.write(val2);
-  }
-
-  // Small delay to stabilize readings
-  delay(15);
-}
-
-// Function to record data
-void recordlightData(int servoPosition, int servoPosition2, int lightLevel) {
-  if (recordCount < maxRecords) {
-    recordedPositions1[recordCount] = servoPosition;
-    recordedPositions2[recordCount] = servoPosition2;
-    recordedLightLevels[recordCount] = lightLevel;
-    recordCount++;
-    Serial.print("Recorded Servo Position 1: ");
-    Serial.print(servoPosition);
-    Serial.print("and servo Position 2: ");
-    Serial.print(servoPosition2);
-    Serial.print(" degrees, Light Level: ");
-    Serial.print(lightLevel);
-    Serial.println(" %");
-  } else {
-    Serial.println("Memory Full: Cannot record more data.");
-  }
-}
-
-// Function to play back recorded data based on current distance
-void playbacklightServoPosition(int currentLightLevel) {
-  // Find the closest recorded light level to the current light level
-  int closestIndex = -1;
-  int closestLightLevel = 999999; // Arbitrary large number for initial comparison
-
-  for (int i = 0; i < recordCount; i++) {
-    int lightLevelDiff = abs(currentLightLevel - recordedLightLevels[i]);
-    if (lightLevelDiff < closestLightLevel) {
-      closestLightLevel = lightLevelDiff;
-      closestIndex = i;
-    }
-  }
-
-  // Set the servo to the position corresponding to the closest distance
-  if (closestIndex != -1) {
-    myservo.write(recordedPositions1[closestIndex]);
-    myservo2.write(recordedPositions2[closestIndex]);
-    Serial.print("Playback Servo Position 1: ");
-    Serial.print(recordedPositions1[closestIndex]);
-    Serial.print("Playback Servo Position 2: ");
-    Serial.print(recordedPositions2[closestIndex]);
-    Serial.print(" degrees, Light Level: ");
-    Serial.print(recordedLightLevels[closestIndex]);
-    Serial.println(" %");
-  }
-}
-  
-void trainDistanceSensor () {
-  val = analogRead(potPin);
-  val2 = analogRead(potPin2);
-
-  // Map the potentiometer value to the servo position (0-180 degrees)
-  val = map(val, 0, 1023, 0, 180);
-  val2 = map(val2, 0, 1023, 0, 180);
-
-  // Read the distance from the ultrasonic sensor
-  RangeInCentimeters = ultrasonic.MeasureInCentimeters();
-
-  // Read the pushbutton state
-  buttonState = digitalRead(buttonPin);
-  // Check if the button is pressed
-  if (buttonState == HIGH && lastButtonState == LOW) {
-    // Button was just pressed
-    buttonPressStartTime = millis();
-  } else if (buttonState == LOW && lastButtonState == HIGH) {
-    // Button was just released
-    unsigned long pressDuration = millis() - buttonPressStartTime;
-    if (pressDuration >= 2000) {
-      // Button was held for 2 seconds or more
-      if (recordCount > 0) {
-        playingBack = true;
-        Serial.println("Starting playback.");
-      }
-    } else if (pressDuration >= 1000 && pressDuration < 2000) {
-      // Button was held for 1 second or more but less than 2 seconds
-      if (!recording) {
-        targetDistance = RangeInCentimeters;
-        Serial.print("Target distance set to: ");
-        Serial.println(targetDistance);
-        recordDistanceData(val, val2, RangeInCentimeters); // Record the servo position and distance
-       
-        // Stop recording after setting the target distance
-      }
-    }
-  }
-
-  // Update the last button state
-  lastButtonState = buttonState;
-
-  // If playing back, set servo based on recorded distances
-  if (playingBack) {
-    playbackDistanceServoPosition(RangeInCentimeters);
-   
-  } else {
-    // Set the servo position if not playing back
-    myservo.write(val);
-    myservo2.write(val2);
-  }
-
-  // Small delay to stabilize readings
-  delay(15);
-}
-
-void recordDistanceData(int servoPosition, int servoPosition2, long distance) {
-  if (recordCount < maxRecords) {
-    recordedPositions1[recordCount] = servoPosition;
-    recordedPositions2[recordCount] = servoPosition2;
-    recordedDistances[recordCount] = distance;
-    recordCount++;
-    Serial.print("Recorded Servo Position 1:  ");
-    Serial.print(servoPosition);
-    Serial.print("Servo 2 ");
-    Serial.print(servoPosition2);
-    Serial.print(" degrees, Distance: ");
-    Serial.print(distance);
-    Serial.println(" cm");
-  } else {
-    Serial.println("Memory Full: Cannot record more data.");
-  }
-}
-
-void playbackDistanceServoPosition(long currentDistance) {
-  // Find the closest recorded distance to the current distance
-  int closestIndex = -1;
-  long closestDistance = 999999; // Arbitrary large number for initial comparison
-
-  for (int i = 0; i < recordCount; i++) {
-    long distanceDiff = abs(currentDistance - recordedDistances[i]);
-    if (distanceDiff < closestDistance) {
-      closestDistance = distanceDiff;
-      closestIndex = i;
-    }
-  }
-
-  // Set the servo to the position corresponding to the closest distance
-  if (closestIndex != -1) {
- myservo.write(recordedPositions1[closestIndex]);
-    myservo2.write(recordedPositions2[closestIndex]);
-    Serial.print("Playback Servo Position 1: ");
-    Serial.print(recordedPositions1[closestIndex]);
-    Serial.print("and Servo Position 2: ");
-    Serial.print(recordedPositions2[closestIndex]);
-    Serial.print(" degrees, Distance: ");
-    Serial.print(recordedDistances[closestIndex]);
-    Serial.println(" cm");
-  }
-}
-
-void loop() {
-  // Read the pushbutton state
-  buttonState = digitalRead(buttonPin);
-  upbuttonState = digitalRead(upbuttonPin);
-  downbuttonState = digitalRead(downbuttonPin);
-
-  // Only allow sensor selection when not in playback or training mode
-  if (!playingBack && !trainingmode && !playbackmode) {
-    if (upbuttonState == HIGH) {
-      useLightSensor = true;
-      useDistanceSensor = false;
-      trainingmode = true;
-      Serial.println("Using Light Sensor for training.");
-    } else if (downbuttonState == HIGH) {
-      useDistanceSensor = true;
-      useLightSensor = false;
-      trainingmode = true;
-      Serial.println("Using Distance Sensor for training.");
-    }
-  }
-
-  if (useLightSensor && trainingmode) {
-    trainLightSensor();
-  }
-
-  // Distance sensor functionality
-  if (useDistanceSensor && trainingmode) {
-    trainDistanceSensor();
-  }
-
-  // Set playback mode based on button press duration
-  if (buttonState == LOW && lastButtonState == HIGH) {
-    unsigned long pressDuration = millis() - buttonPressStartTime;
-    if (pressDuration >= 2000) {
-      playbackmode = true;
-      trainingmode = false;
-      playingBack = true;
-      Serial.println("Starting playback mode.");
-    }
-  }
-
-  // Ensure playbackmode flag is used to manage playback
-  if (playbackmode) {
-    if (useLightSensor) {
-      playbacklightServoPosition(lightLevel);
-    }
-    if (useDistanceSensor) {
-      playbackDistanceServoPosition(RangeInCentimeters);
-    }
-  }
-
-  // Update the last button state
-  lastButtonState = buttonState;
-}
 
 
 //  // Read the distance from the ultrasonic sensor
