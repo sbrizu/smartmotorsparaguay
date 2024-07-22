@@ -18,7 +18,6 @@ const int buttonPin = 5;
 const int upbuttonPin = 6;
 const int downbuttonPin = 7;
 const int ultrasonicPin = 4;
-const int light_sensor = A1; 
 
 Servo myservo;
 Servo myservo2;
@@ -31,7 +30,6 @@ long RangeInCentimeters;
 int buttonState;
 int upbuttonState;
 int downbuttonState;
-int lightLevel;
 int lastButtonState = LOW;
 unsigned long buttonPressStartTime;
 
@@ -39,14 +37,11 @@ unsigned long buttonPressStartTime;
 const int maxRecords = 10; // Reduced to save memory
 int recordedPositions1[maxRecords];
 int recordedPositions2[maxRecords];
-int recordedDistances[maxRecords];
-int recordedLightLevels[maxRecords];
+long recordedDistances[maxRecords];
 int recordCount = 0;
 bool playingBack = false;
-int actualLightLevel = -1;
-bool useLightSensor = false;
 bool trainingmode = false;
-bool playbackmode = false;
+bool useDistanceSensor = false; // Declaration of useDistanceSensor
 
 void checkMemory() {
   extern int __heap_start, *__brkval;
@@ -91,15 +86,14 @@ void setup() {
   checkMemory(); // Check free memory at the end of setup
 }
 
-void trainLightSensor() {
+void trainDistanceSensor() {
   val = analogRead(potPin);
   val2 = analogRead(potPin2);
 
   val = map(val, 0, 1023, 0, 180);
   val2 = map(val2, 0, 1023, 0, 180);
 
-  int raw_light = analogRead(light_sensor);
-  lightLevel = map(raw_light, 0, 1023, 0, 100);
+  RangeInCentimeters = ultrasonic.MeasureInCentimeters();
   
   if (buttonState == HIGH && lastButtonState == LOW) {
     buttonPressStartTime = millis();
@@ -112,10 +106,9 @@ void trainLightSensor() {
       }
     } else if (pressDuration >= 1000 && pressDuration < 2000) {
       if (!playingBack) {
-        actualLightLevel = lightLevel;
-        Serial.print("Actual light level set to: ");
-        Serial.println(actualLightLevel);
-        recordLightData(val, val2, lightLevel);
+        Serial.print("Target distance set to: ");
+        Serial.println(RangeInCentimeters);
+        recordDistanceData(val, val2, RangeInCentimeters);
       }
     }
   }
@@ -123,7 +116,7 @@ void trainLightSensor() {
   lastButtonState = buttonState;
 
   if (playingBack) {
-    playbackLightServoPosition(lightLevel);
+    playbackDistanceServoPosition(RangeInCentimeters);
   } else {
     myservo.write(val);
     myservo2.write(val2);
@@ -132,32 +125,32 @@ void trainLightSensor() {
   delay(15);
 }
 
-void recordLightData(int servoPosition, int servoPosition2, int lightLevel) {
+void recordDistanceData(int servoPosition, int servoPosition2, long distance) {
   if (recordCount < maxRecords) {
     recordedPositions1[recordCount] = servoPosition;
     recordedPositions2[recordCount] = servoPosition2;
-    recordedLightLevels[recordCount] = lightLevel;
+    recordedDistances[recordCount] = distance;
     recordCount++;
     Serial.print("Recorded Servo Position 1: ");
     Serial.print(servoPosition);
     Serial.print(" and Servo Position 2: ");
     Serial.print(servoPosition2);
-    Serial.print(" degrees, Light Level: ");
-    Serial.print(lightLevel);
-    Serial.println(" %");
+    Serial.print(" degrees, Distance: ");
+    Serial.print(distance);
+    Serial.println(" cm");
   } else {
     Serial.println("Memory Full: Cannot record more data.");
   }
 }
 
-void playbackLightServoPosition(int currentLightLevel) {
+void playbackDistanceServoPosition(long currentDistance) {
   int closestIndex = -1;
-  int closestLightLevel = 999999;
+  long closestDistance = 999999;
 
   for (int i = 0; i < recordCount; i++) {
-    int lightLevelDiff = abs(currentLightLevel - recordedLightLevels[i]);
-    if (lightLevelDiff < closestLightLevel) {
-      closestLightLevel = lightLevelDiff;
+    long distanceDiff = abs(currentDistance - recordedDistances[i]);
+    if (distanceDiff < closestDistance) {
+      closestDistance = distanceDiff;
       closestIndex = i;
     }
   }
@@ -169,9 +162,9 @@ void playbackLightServoPosition(int currentLightLevel) {
     Serial.print(recordedPositions1[closestIndex]);
     Serial.print(" and Servo Position 2: ");
     Serial.print(recordedPositions2[closestIndex]);
-    Serial.print(" degrees, Light Level: ");
-    Serial.print(recordedLightLevels[closestIndex]);
-    Serial.println(" %");
+    Serial.print(" degrees, Distance: ");
+    Serial.print(recordedDistances[closestIndex]);
+    Serial.println(" cm");
   }
 }
 
@@ -180,16 +173,16 @@ void loop() {
   upbuttonState = digitalRead(upbuttonPin);
   downbuttonState = digitalRead(downbuttonPin);
 
-  if (!playingBack && !trainingmode && !playbackmode) {
-    if (upbuttonState == HIGH) {
-      useLightSensor = true;
+  if (!playingBack && !trainingmode) {
+    if (downbuttonState == HIGH) {
+      useDistanceSensor = true;
       trainingmode = true;
-      Serial.println("Using Light Sensor for training.");
+      Serial.println("Using Distance Sensor for training.");
     }
   }
 
-  if (useLightSensor && trainingmode) {
-    trainLightSensor();
+  if (useDistanceSensor && trainingmode) {
+    trainDistanceSensor();
   }
 
   // Check memory periodically
@@ -199,4 +192,3 @@ void loop() {
     lastMemoryCheck = millis();
   }
 }
-
