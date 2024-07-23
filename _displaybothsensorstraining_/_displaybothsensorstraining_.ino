@@ -341,54 +341,48 @@ void displaySensorOptions(){
 
 
 
-void displayMotorPositions(int pos1, int pos2) {
+void displayMotorPositions(int pos1, int pos2, bool playbackMode) {
   display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
+  display.setTextColor(playbackMode ? SSD1306_BLACK : SSD1306_WHITE); // Change text color based on mode
 
-  // Draw first box higher up
-  display.drawRect(10, 10, 40, 15, SSD1306_WHITE);
-  display.setCursor(15, 13); // Adjusted cursor position
+  // Draw first box
+  display.drawRect(10, 15, 40, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+  display.setCursor(15, 18); // Adjusted position
   display.print(F("M1:"));
   display.print(pos1);
 
-  // Draw second box higher up
-  display.drawRect(60, 10, 40, 15, SSD1306_WHITE);
-  display.setCursor(65, 13); // Adjusted cursor position
+  // Draw second box
+  display.drawRect(60, 15, 40, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+  display.setCursor(65, 18); // Adjusted position
   display.print(F("M2:"));
   display.print(pos2);
 }
 
 
-
-void displaySensorValue(int sensorValue, const __FlashStringHelper* label, int motorPos1, int motorPos2) {
+void displaySensorValue(int sensorValue, const __FlashStringHelper* label, int motorPos1, int motorPos2, bool playbackMode) {
   int percentage = map(sensorValue, 0, 100, 0, 100);
-  display.clearDisplay();
 
   // Clear specific areas instead of the whole display
-  display.fillRect(0, 20, 128, 15, SSD1306_BLACK); // Clear the area for motor positions
-  display.fillRect(1, 50, 126, 10, SSD1306_BLACK); // Clear the progress bar area
-  display.fillRect(1, 11, 68, 33, SSD1306_BLACK); // Clear the box for the sensor label
+  display.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, playbackMode ? SSD1306_WHITE : SSD1306_BLACK);
 
   // Display the motor positions
-  displayMotorPositions(motorPos1, motorPos2);
+  displayMotorPositions(motorPos1, motorPos2, playbackMode);
 
   // Draw the progress bar
-  display.drawLine(0, 47, 0, 62, SSD1306_WHITE);
-  display.fillRect(1, 50, map(percentage, 0, 100, 0, SCREEN_WIDTH - 2), 10, SSD1306_WHITE);
+  display.drawLine(0, 47, 0, 62, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+  display.fillRect(1, 50, map(percentage, 0, 100, 0, SCREEN_WIDTH - 2), 10, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+
   display.setTextSize(1); // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setTextColor(playbackMode ? SSD1306_BLACK : SSD1306_WHITE); // Change text color based on mode
   display.setCursor(102, 50);
   display.print(percentage);
   display.println(F("%"));
-  
+
   // Adjusted position of the label
   display.setCursor(5, 35); // Lowered text position
-  display.setTextSize(1);
   display.println(label);
-  display.setTextSize(1);
   display.display();
 }
-
 
 void trainDistanceSensor() {
   val = analogRead(potPin);
@@ -401,7 +395,7 @@ void trainDistanceSensor() {
 
   int distancePercentage = map(RangeInCentimeters, 0, 100, 0, 100);
   
-  displaySensorValue(distancePercentage, F("Distancia"), val, val2);
+  displaySensorValue(distancePercentage, F("Distancia"), val, val2, playingBack);
 
   if (buttonState == HIGH && lastButtonState == LOW) {
     buttonPressStartTime = millis();
@@ -410,6 +404,7 @@ void trainDistanceSensor() {
     if (pressDuration >= 2000) {
       if (recordCount > 0) {
         playingBack = true;
+        display.clearDisplay(); // Clear display when switching to playback mode
       }
     } else if (pressDuration >= 1000 && pressDuration < 2000) {
       if (!playingBack) {
@@ -439,7 +434,7 @@ void trainLightSensor() {
 
   lightSensorValue =  map(analogRead(lightSensorPin), 0, 1023, 0, 100);
 
-  displaySensorValue(lightSensorValue, F("Nivel de luz"), val, val2);
+  displaySensorValue(lightSensorValue, F("Nivel de luz"), val, val2, playingBack);
 
   if (buttonState == HIGH && lastButtonState == LOW) {
     buttonPressStartTime = millis();
@@ -448,6 +443,7 @@ void trainLightSensor() {
     if (pressDuration >= 2000) {
       if (recordCount > 0) {
         playingBack = true;
+        display.clearDisplay(); // Clear display when switching to playback mode
       }
     } else if (pressDuration >= 1000 && pressDuration < 2000) {
       if (!playingBack) {
@@ -467,6 +463,8 @@ void trainLightSensor() {
 
   delay(15);
 }
+
+
 
 void recordSensorData(int servoPosition, int servoPosition2, long sensorValue) {
   if (recordCount < maxRecords) {
@@ -513,13 +511,11 @@ void loop() {
       trainingmode = true;
       useLightSensor = false;
       displayOptions = false;
-      
     } else if (upbuttonState == HIGH) {
       useLightSensor = true;
       trainingmode = true;
       useDistanceSensor = false;
       displayOptions = false;
-     
     }
   } else {
     if (useDistanceSensor && trainingmode) {
@@ -537,4 +533,3 @@ void loop() {
     lastMemoryCheck = millis();
   }
 }
-
