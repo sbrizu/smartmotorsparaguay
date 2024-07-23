@@ -35,6 +35,7 @@ int downbuttonState;
 int lastButtonState = LOW;
 unsigned long buttonPressStartTime;
 
+
 // record data
 const int maxRecords = 10; // Reduced to save memory
 int recordedPositions1[maxRecords];
@@ -45,6 +46,8 @@ bool playingBack = false;
 bool trainingmode = false;
 bool useDistanceSensor = false; // Declaration of useDistanceSensor
 bool useLightSensor = false;    // Declaration of useLightSensor
+bool initialized = false;
+bool displayOptions = false;
 
 void checkMemory() {
   extern int __heap_start, *__brkval;
@@ -53,6 +56,7 @@ void checkMemory() {
   Serial.print(F("Free memory: "));
   Serial.println(free_memory);
 }
+
 
 void setup() {
   Serial.begin(9600);
@@ -98,6 +102,19 @@ void setup() {
   display.clearDisplay();
 
   checkMemory(); // Check free memory at the end of setup
+}
+
+void displaySensorOptions() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 0);
+  display.println(F("Options:"));
+  display.setTextSize(1);
+  display.setCursor(0, 30);
+  display.println(F("Luz"));
+  display.setCursor(0, 45);
+  display.println(F("Distancia"));
+  display.display();
 }
 
 void displaySensorChoice(const __FlashStringHelper* sensor) {
@@ -238,26 +255,34 @@ void loop() {
   upbuttonState = digitalRead(upbuttonPin);
   downbuttonState = digitalRead(downbuttonPin);
 
-  if (!playingBack && !trainingmode) {
+  if (!initialized) {
+    if (buttonState == HIGH) {
+      displayOptions = true;
+      initialized = true;
+      displaySensorOptions();
+      delay(2000); // Debounce delay
+    }
+  } else if (displayOptions) {
     if (downbuttonState == HIGH) {
       useDistanceSensor = true;
       trainingmode = true;
       useLightSensor = false;
+      displayOptions = false;
       displaySensorChoice(F("Sensor de distancia"));
     } else if (upbuttonState == HIGH) {
       useLightSensor = true;
       trainingmode = true;
       useDistanceSensor = false;
+      displayOptions = false;
       displaySensorChoice(F("Sensor de luz"));
     }
-  }
-
-  if (useDistanceSensor && trainingmode) {
-    trainDistanceSensor();
-  }
-
-  if (useLightSensor && trainingmode) {
-    trainLightSensor();
+  } else {
+    if (useDistanceSensor && trainingmode) {
+      trainDistanceSensor();
+    }
+    if (useLightSensor && trainingmode) {
+      trainLightSensor();
+    }
   }
 
   // Check memory periodically
@@ -267,3 +292,4 @@ void loop() {
     lastMemoryCheck = millis();
   }
 }
+
