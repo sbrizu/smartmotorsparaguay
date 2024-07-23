@@ -346,14 +346,14 @@ void displayMotorPositions(int pos1, int pos2, bool playbackMode) {
   display.setTextColor(playbackMode ? SSD1306_BLACK : SSD1306_WHITE); // Change text color based on mode
 
   // Draw first box
-  display.drawRect(10, 15, 40, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+  display.drawRect(10, 15, 50, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
   display.setCursor(15, 18); // Adjusted position
   display.print(F("M1:"));
   display.print(pos1);
 
   // Draw second box
-  display.drawRect(60, 15, 40, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
-  display.setCursor(65, 18); // Adjusted position
+  display.drawRect(70, 15, 50, 15, playbackMode ? SSD1306_BLACK : SSD1306_WHITE);
+  display.setCursor(75, 18); // Adjusted position
   display.print(F("M2:"));
   display.print(pos2);
 }
