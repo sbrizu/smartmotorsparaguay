@@ -15,9 +15,9 @@ All of these libraries are included in the Arduino IDE. If using another IDE, do
 #include <Adafruit_SSD1306.h>
 ```
 
-# Code description
-The code is made for an Arduino based tool that utilizes 2 servo motors, 1 grove analog sensor (light), 1 grove digital sensor 
-(ultrasonic), an OLED I2C 164x64 screen and 3 push buttons. If re-designing the PCB, remember to edit the pin numbers accordingly.
+# Files description
+Main code under "_displaybothsensorstraining_". Other files are for testing and learning purposes. The main code is made for an Arduino-based tool that utilizes 2 servo motors, 1 grove analog sensor (light), 1 grove digital sensor 
+(ultrasonic), an OLED I2C 164x64 screen and 3 push buttons. If re-designing the PCB, remember to edit the pin numbers accordingly. 
 
 # Modifying the code 
 Download the main file and make a copy if making modifications. 
