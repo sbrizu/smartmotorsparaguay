@@ -406,7 +406,7 @@ void trainDistanceSensor() {
         playingBack = true;
         display.clearDisplay(); // Clear display when switching to playback mode
       }
-    } else if (pressDuration >= 500 && pressDuration < 2000) {
+    } else if (pressDuration >= 100 && pressDuration < 2000) {
       if (!playingBack) {
         recordSensorData(val, val2, RangeInCentimeters);
       }
@@ -445,7 +445,7 @@ void trainLightSensor() {
         playingBack = true;
         display.clearDisplay(); // Clear display when switching to playback mode
       }
-    } else if (pressDuration >= 500 && pressDuration < 2000) {
+    } else if (pressDuration >= 100 && pressDuration < 2000) {
       if (!playingBack) {
         recordSensorData(val, val2, lightSensorValue);
       }
